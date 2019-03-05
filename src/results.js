@@ -2,29 +2,35 @@ import React, { Component } from "react";
 
 class Results extends Component {
   render() {
-    const title = this.book.volumeInfo.title;
-    const image = this.book.volumeInfo.imageLinks.thumbnail;
-    const author = this.book.volumeInfo.authors;
-    const description = this.book.volumeInfo.description;
-    const price =
-      this.book.saleInfo.saleability === "FOR_SALE"
-        ? new Intl.NumberFormat("en-US", {
-            style: "currency",
-            currency: "USD"
-          }).format(this.book.saleInfo.listPrice.amount)
-        : this.book.saleInfo.saleability === "FOR_SALE"
-        ? "Free"
-        : "Not for sale";
-
+    const results = this.props.results.map((element, key) => {
+      return (
+        <li key={key}>
+          <img
+            src={
+              "imageLinks" in element.volumeInfo
+                ? element.volumeInfo.imageLinks.smallThumbnail
+                : ""
+            }
+            alt={element.title}
+          />
+          <strong>{element.volumeInfo.title}</strong>
+          <p>
+            {"authors" in element.volumeInfo
+              ? element.volumeInfo.authors.map(i => <i>{i} </i>)
+              : ""}
+          </p>
+          <p>{element.volumeInfo.description}</p>
+          <p>
+            {"listPrice" in element.saleInfo
+              ? element.saleInfo.listPrice.amount
+              : ""}
+          </p>
+        </li>
+      );
+    });
     return (
-      <div className="results">
-        <h2>{title}</h2>
-        <img src={image} alt={title} />
-        <div>
-          <p>Author: {author}</p>
-          <p>Price: {price}</p>
-          <p>{description}</p>
-        </div>
+      <div className="BooksearchList">
+        <ul>{results}</ul>
       </div>
     );
   }

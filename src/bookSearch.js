@@ -1,45 +1,66 @@
 import React, { Component } from "react";
 
 class BookSearch extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      search: "",
+      results: []
+    };
+  }
+
+  searchChange(search) {
+    this.setState({
+      search: search
+    });
+  }
+
+  handleSubmit(e) {
+    e.preventDefault();
+    this.props.getSearch(this.state.search);
+    const url = `https://www.googleapis.com/books/v1/volumes?q=${
+      this.state.search
+    }`;
+    fetch(url)
+      .then(res => {
+        if (!res.ok) {
+          throw new Error("Something went wrong, please try again later.");
+        }
+        return res;
+      })
+      .then(res => res.json())
+      .then(data => {
+        this.props.getData(data); // pushes results back to app
+
+        this.setState({
+          results: data
+        });
+      })
+      .catch(err => {
+        this.setState({
+          error: err.message
+        });
+      });
+  }
+
   render() {
     return (
-      <form onSubmit={this.props.handleSearch}>
-        <label>
-          Search:
+      <div>
+        <form className="searchBar_form" onSubmit={e => this.handleSubmit(e)}>
+          <label>Search: </label>
           <input
-            name="searchTerm"
-            ref="search"
             type="text"
+            name="search"
+            id="searchBar"
             placeholder="Search Google Books"
+            value={this.state.search}
+            onChange={e => this.searchChange(e.target.value)}
             required
           />
-        </label>
-        <button type="submit">Submit</button>
-
-        <label>
-          Print Type:
-          <select name="printType" onChange={this.props.handleFilter}>
-            <option value="all" selected>
-              All
-            </option>
-            <option value="books">Books</option>
-            <option value="magazines">Magazines</option>
-          </select>
-        </label>
-        <label>
-          Book Type:
-          <select name="bookType" onChange={this.props.handleFilter}>
-            <option value="no filter" selected disabled>
-              No filter
-            </option>
-            <option value="ebooks">Ebooks</option>
-            <option value="free-ebooks">Free Ebooks</option>
-            <option value="full">Full</option>
-            <option value="paid-ebooks">Paid Ebooks</option>
-            <option value="partial">Partial</option>
-          </select>
-        </label>
-      </form>
+          <button type="submit">Search</button>
+        </form>
+      </div>
     );
   }
 }
