@@ -1,62 +1,123 @@
 import React, { Component } from "react";
-
-import "./App.css";
 import BookSearch from "./bookSearch";
-
-import Filter from "./filter";
+import Results from "./results";
+import "./App.css";
 
 class App extends Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.state = {
-      searchQuery: "",
-      books: []
+      books: [],
+      searchTerm: "Search Google Books",
+      printType: "",
+      bookType: "",
+      searchLoading: false,
+      error: null
     };
   }
 
-  handleChange = books => {
+  handleSearch = event => {
+    event.preventDefault();
     this.setState({
-      books
+      searchTerm: event.target.searchTerm.value
+    });
+
+    const searchURL = `https://www.googleapis.com/books/v1/volumes?q=${
+      this.state.searchTerm
+    }`;
+
+    if (this.state.printType && this.state.bookType) {
+      const params = {
+        api_key: "AIzaSyBoXs7DLtFxdVuTpVOhA4gR0RzY3Rt-0t0",
+        q: this.state.searchTerm,
+        filter: this.state.bookType,
+        printType: this.state.printType
+      };
+      const queryString = Object.keys(params)
+        .map(
+          key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`
+        )
+        .join("&");
+
+      let searchURL = `${searchURL}?${queryString}`;
+    }
+
+    if (this.state.printType) {
+      const params = {
+        api_key: "AIzaSyBoXs7DLtFxdVuTpVOhA4gR0RzY3Rt-0t0",
+        q: this.state.searchTerm,
+        printType: this.state.printType
+      };
+      const queryStr = Object.keys(params)
+        .map(
+          key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`
+        )
+        .join("&");
+
+      let searchURL = `${searchURL}?${queryStr}`;
+    }
+    if (this.state.bookType) {
+      const params = {
+        api_key: "AIzaSyBoXs7DLtFxdVuTpVOhA4gR0RzY3Rt-0t0",
+        q: this.state.searchTerm,
+        filter: this.state.bookType
+      };
+      const queryStr = Object.keys(params)
+        .map(
+          key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`
+        )
+        .join("&");
+
+      let searchURL = `${searchURL}?${queryStr}`;
+    }
+
+    const options = {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    };
+
+    fetch(searchURL, options)
+      .then(res =>
+        res.ok ? res.json() : Promise.reject("Something went wrong")
+      )
+      .then(books => {
+        this.setState({
+          books: books.items,
+          searchLoading: false
+        });
+      })
+      .catch(error => this.setState({ error, searchLoading: false }));
+
+    console.log(this.state);
+  };
+
+  handleFilter = event => {
+    const { name, value } = event.target;
+    this.setState({
+      [name]: value
     });
   };
 
-  componentDidMount() {
-    const APIKey = `AIzaSyBoXs7DLtFxdVuTpVOhA4gR0RzY3Rt-0t0`;
-    const url = `https://www.googleapis.com/books/v1/volumes?q=${
-      this.state.searchQuery
-    }&projection=full&key=${APIKey}`;
-
-    fetch(url)
-      .then(res => {
-        if (!res.ok) {
-          throw new Error("Something went wrong, please try again later.");
-        }
-        return res;
-      })
-      .then(res => res.json())
-      .then(data => {
-        this.setState({
-          books: data,
-          error: null
-        });
-      })
-      .catch(err => {
-        this.setState({
-          error: err.message
-        });
-      });
-  }
-
   render() {
+    if (this.state.error) {
+      return <div>Error: {this.state.error}</div>;
+    } else if (this.state.searchLoading) {
+      return <div>Laoding..</div>;
+    }
+
     return (
       <div className="App">
-        <div className="static-page">
-          <h1>Google Books Search</h1>
-          <BookSearch handleChange={this.handleChange} />
-        </div>
-        <div className="booksList" />
-
-        <Filter />
+        <header className="App-header">
+          <h1>Search Google Books</h1>
+        </header>
+        <BookSearch
+          handleFilter={this.handleFilter}
+          handleSearch={this.handleSearch}
+          state={this.state}
+        />
+        <Results books={this.state.books} />
       </div>
     );
   }
